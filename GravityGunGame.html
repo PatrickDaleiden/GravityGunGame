@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			Firecaster.com
+		</title>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+		<script type="text/javascript">
+
+		  var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-27924056-1']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
+		</script>
+	</head>
+	<body style="margin: 0;
+		padding: 0;">
+		<canvas width=800 height=800 id="gamescreen" style="display:block;margin:auto;"></canvas>
+		<div style="position:absolute;top:5px;left:5px;z-index:2;">
+			<a href="/"><img src="http://www.firecaster.com/firecasterdarksmall.png" /></a>
+		</div>
+		<script>
+			var currFrame = 0;
+			var ctx = document.getElementById("gamescreen").getContext('2d');
+			var size = 800;
+			var width = size;
+			var height = size;
+			var keys=[];
+			resize();
+			setInterval(draw,33);
+			$(window).resize(resize);
+			$(document).keydown(function(e){
+				console.log(e.which);
+				keys[e.which] = true;
+			});
+			$(document).keyup(function(e){
+				keys[e.which] = false;
+			});
+			var mousex = 0;
+			var mousey = 0;
+			var mousedown = false;
+			$('#gamescreen').mousedown(function(e){
+				mousex  = (e.offsetX || e.clientX - $(e.target).offset().left)*width/$('#gamescreen').width();
+				mousey  = (e.offsetY || e.clientY - $(e.target).offset().top)*height/$('#gamescreen').height();
+				mousedown = true;
+			});
+			$('#gamescreen').mouseup(function(e){
+				mousex  = (e.offsetX || e.clientX - $(e.target).offset().left)*width/$('#gamescreen').width();
+				mousey  = (e.offsetY || e.clientY - $(e.target).offset().top)*height/$('#gamescreen').height();
+				mousedown = false;
+			});
+			$('#gamescreen').mousemove(function(e){
+				mousex  = (e.offsetX || e.clientX - $(e.target).offset().left)*width/$('#gamescreen').width();
+				mousey  = (e.offsetY || e.clientY - $(e.target).offset().top)*height/$('#gamescreen').height();
+			});
+			function resize(){
+				var wwidth = $(window).width();
+				var wheight = $(window).height();
+				if (wwidth < wheight)
+				{
+					$('#gamescreen').width(wwidth);
+					$('#gamescreen').height(wwidth);
+					$('#gamescreen').css("left",-wwidth/2 + "px");
+					$('#gamescreen').css("margin-top",wheight/2-wwidth/2 + "px");
+				}
+				else
+				{
+					$('#gamescreen').width(wheight);
+					$('#gamescreen').height(wheight);
+					$('#gamescreen').css("left",-wheight/2 + "px");
+					//$('#gamescreen').css("top",-wheight/2 + "px");
+					$('#gamescreen').css("margin-top",0 + "px");
+				
+				}
+				if ($('#gamescreen').width() > size)
+				{
+					$('#gamescreen').width(size);
+					$('#gamescreen').height(size);	
+					$('#gamescreen').css("left",-size/2 + "px");
+					$('#gamescreen').css("margin-top",wheight/2-size/2 + "px");
+					
+				}
+			
+			}
+			//w=keys[87]
+			//a=keys[65]
+			//s=keys[83]
+			//d=keys[68]
+			//space=keys[32]
+			//e = keys[69]
+			//q = keys [81]
+			function Unit(e){
+				for (var i in e){
+					this[i] = e[i];
+				}
+			}
+			function Enemy(e){
+				for(var i in e){
+					this[i] = e[i];
+				}
+			}
+			function Ball(e){
+				for (var i in e){
+					this[i] = e[i];
+				}
+			}
+			function myobj(x,y){
+				this.x = x;
+				this.y = y;
+			}
+			Unit.prototype = {
+				x: width/2,
+				y: height/2,
+				amps: 0,
+				angle: Math.PI/2,
+				draw: function(){
+					ctx.fillStyle = "red";
+					ctx.save();
+					ctx.translate(this.x,this.y);
+					ctx.rotate(this.angle);
+					ctx.fillRect(-15,-10,30,20);
+					ctx.restore();
+				}
+			}
+			Enemy.prototype = {
+				x: width/2,
+				y: height/2,
+				amps: 0,
+				angle: Math.PI/2,
+				draw: function(){
+					ctx.fillStyle = "black";
+					ctx.save();
+					ctx.translate(this.x,this.y);
+					ctx.rotate(this.angle);
+					ctx.fillRect(-15,-10,30,20);
+					ctx.restore();
+				}
+			}
+			/*function Bullet(e){
+				for (var i in e){
+					this[i] = e[i];
+				}
+			}
+			Bullet.prototype = {
+				x: width/2,
+				y: height/2,
+				angle: Math.PI/2,
+				draw: function(){
+					
+					ctx.save();
+					ctx.translate(this.x,this.y);
+					ctx.rotate(this.angle);
+					ctx.fillRect(-10,-5,20,10);
+					ctx.restore();
+				}
+			}*/
+			var PlayerAngleInDegrees;
+			var diffy;
+			var diffx;
+			var distance;
+			var framecounter = 0;
+			var score = 0;
+			var bullets = [];
+			var player = new Unit();
+			var enemy = new Enemy();
+			/*var bullet = new Bullet({
+				x: player.x,
+				y: player.y,
+				angle: player.angle,
+				draw: function(){
+					ctx.fillStyle = "black";
+					ctx.save();
+					ctx.translate(this.x,this.y);
+					ctx.rotate(this.angle);
+					ctx.fillRect(-5,-2.5,10,5);
+					ctx.restore();
+				}
+			}
+			);*/
+			Ball.prototype = {
+				x: width/2,
+				y: height/2,
+				magnitude: 0,
+				direction: 0,
+				draw: function(){
+					ctx.fillStyle = "green";
+					ctx.save();
+					ctx.translate(this.x,this.y);
+					ctx.beginPath();
+					ctx.arc(0, 0, 25, 0, 2*Math.PI);
+					ctx.stroke()
+					ctx.restore();
+				}
+			}
+			var ball = new Ball();
+			var units = [];
+			units.push(player);
+			units.push(enemy);
+			units.push(ball);
+
+			//drawing the entire canvas
+			function draw(){
+				ctx.fillStyle = "rgba(255,255,255,100)";
+				ctx.fillRect(0,0,width,height);
+				ctx.fillStyle = "#FF0022";
+				ctx.font = "30px Arial";
+				ctx.fillText("Score: " + score, 600,30);
+
+				//re-evaluating the position of the player's coordinates
+				if (keys[68]){
+					player.angle+=.075;
+				}
+				if (keys[65]){
+					player.angle-=.075;
+				}
+				if (keys[87]){
+					player.x -= 5 * Math.cos(player.angle);
+					player.y -= 5 * Math.sin(player.angle);
+					
+				}
+				if (keys[83]){
+					player.x += 5 * Math.cos(player.angle);
+					player.y += 5 * Math.sin(player.angle);
+				}
+				if (keys[39]){
+					enemy.angle+=.075;
+				}
+				if (keys[37]){
+					enemy.angle-=.075;
+				}
+				if (keys[38]){
+					enemy.x -= 5 * Math.cos(enemy.angle);
+					enemy.y -= 5 * Math.sin(enemy.angle);
+				}
+				if (keys[40]){
+					enemy.x += 5 * Math.cos(enemy.angle);
+					enemy.y += 5 * Math.sin(enemy.angle);
+				}
+				if (keys[69]){
+					var diffy = player.y - ball.y;
+					var diffx = player.x - ball.x;
+					var distance = Math.sqrt((diffy * diffy) + (diffx * diffx));
+					if (distance <= 50){
+						ball.x += 5 * Math.cos(Math.atan2(player.y - ball.y, player.x - ball.x));
+						ball.y += 5 * Math.sin(Math.atan2(player.y - ball.y, player.x - ball.x));
+					}
+					else {
+						ball.magnitude = 1000 / (2 * Math.PI * distance);
+						ball.direction = Math.atan2(player.y - ball.y, player.x - ball.x);
+						ball.x += ball.magnitude * Math.cos(ball.direction);
+						ball.y += ball.magnitude * Math.sin(ball.direction);
+					}
+				}
+				if (keys[81]){
+					var diffy = player.y - ball.y;
+					var diffx = player.x - ball.x;
+					var distance = Math.sqrt((diffy * diffy) + (diffx * diffx));
+					if(distance == 0){
+						distance = 1;
+					}
+					ball.magnitude = -1000 / (2 * Math.PI * distance);
+					ball.direction = Math.atan2(player.y - ball.y, player.x - ball.x);
+					ball.x += ball.magnitude * Math.cos(ball.direction);
+					ball.y += ball.magnitude * Math.sin(ball.direction);
+				}
+				if (keys[191]){
+					var diffy = enemy.y - ball.y;
+					var diffx = enemy.x - ball.x;
+					var distance = Math.sqrt((diffy * diffy) + (diffx * diffx));
+					if(distance == 0){
+						distance = 1;
+					}
+					ball.magnitude = 1000 / (2 * Math.PI * distance);
+					ball.direction = Math.atan2(enemy.y - ball.y, enemy.x - ball.x);
+					ball.x += ball.magnitude * Math.cos(ball.direction);
+					ball.y += ball.magnitude * Math.sin(ball.direction);
+				}
+				if (keys[190]){
+					var diffy = enemy.y - ball.y;
+					var diffx = enemy.x - ball.x;
+					var distance = Math.sqrt((diffy * diffy) + (diffx * diffx));
+					if(distance == 0){
+						distance = 1;
+					}
+					ball.magnitude = -1000 / (2 * Math.PI * distance);
+					ball.direction = Math.atan2(enemy.y - ball.y, enemy.x - ball.x);
+					ball.x += ball.magnitude * Math.cos(ball.direction);
+					ball.y += ball.magnitude * Math.sin(ball.direction);
+				}
+				//creating a new bullet when the spacebar is held down
+				/*if (keys[32] && framecounter == 0){
+					bullets.push(
+						new Bullet({
+							x: player.x,
+							
+							y: player.y,
+							angle: player.angle,
+							draw: function(){
+								ctx.fillStyle = "black";
+								ctx.save();
+								ctx.translate(this.x,this.y);
+								ctx.rotate(this.angle);
+								ctx.fillRect(-5,-2.5,10,5);
+								ctx.restore();
+							}
+						})
+					)
+					framecounter = 15;
+				}
+				
+				//creating a new bullet when the mouse is pushed down
+				if (mousedown && framecounter == 0){
+					bullets.push(
+						new Bullet({
+							x: player.x,
+							
+							y: player.y,
+							angle: Math.atan2(player.y - mousey,player.x - mousex),
+							draw: function(){
+								ctx.fillStyle = "black";
+								ctx.save();
+								ctx.translate(this.x,this.y);
+								ctx.rotate(this.angle);
+								ctx.fillRect(-5,-2.5,10,5);
+								ctx.restore();
+							}
+						})
+					)
+					framecounter = 15;
+				}
+				
+				for (var b = bullets.length-1; b >= 0; b--){
+					for (var i = units.length-1; i > 0; i--){
+						diffy = units[i].y - bullets[b].y;
+						diffx = units[i].x - bullets[b].x;
+						distance = Math.sqrt(diffy * diffy + diffx * diffx);
+						if ((((Math.sqrt(31.25) + Math.sqrt(325))) >= distance) && bullets[b] != 0){
+							bullets[b] = 0;
+							units[i] = 0;
+							}
+					}
+				}*/
+				//for units run the step function
+				/*for (var i = units.length; i > 0; i--){
+					if (units[i-1] == 0){
+						units.splice(i-1,1);
+						score++;
+					}
+				}
+				for (var b = bullets.length; b > 0; b--){
+					if (bullets[b-1] == 0){
+						bullets.splice(b-1,1);
+					}
+				}
+				
+				
+				
+				
+				//drawing the bullets and then re-evaluating their position 
+				for (var i = 0; i < bullets.length; i++){
+					bullets[i].draw();
+					bullets[i].x += -10 * Math.cos(bullets[i].angle);
+					bullets[i].y += -10 * Math.sin(bullets[i].angle);
+				}*/
+				
+				//drawing all of the units
+				for (var i = 0; i < units.length; i++){
+					units[i].draw();
+					if (units[i].step)
+					{
+						units[i].step();
+					}
+				}
+				
+				//subtracting the framecounter
+				framecounter--;
+				if(framecounter < 0)
+				{
+					framecounter = 0;
+				}
+				currFrame++;
+				if((currFrame % 100) == 0){
+					currFrame = 0;
+				}
+				ctx.strokeStyle = "#000";
+				ctx.strokeRect(0,0,width,height);		
+			}
+			//mousedown
+			//mousex
+			//mousey
+		</script>
+	</body>
+</html>
